@@ -3,7 +3,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class DialogHelper {
-  // Show loading dialog
   static void showLoadingDialog(BuildContext context, {String? message}) {
     showDialog(
       context: context,
@@ -37,7 +36,6 @@ class DialogHelper {
     );
   }
 
-  // Show error dialog
   static void showErrorDialog(
     BuildContext context, {
     required String message,
@@ -67,7 +65,6 @@ class DialogHelper {
     );
   }
 
-  // Show success dialog
   static void showSuccessDialog(
     BuildContext context, {
     required String message,
@@ -94,7 +91,6 @@ class DialogHelper {
     );
   }
 
-  // Show confirmation dialog
   static Future<bool> showConfirmDialog(
     BuildContext context, {
     required String message,
@@ -131,7 +127,6 @@ class DialogHelper {
     return result ?? false;
   }
 
-  // Show permission dialog
   static void showPermissionDialog(
     BuildContext context, {
     required String message,
@@ -167,7 +162,6 @@ class DialogHelper {
     );
   }
 
-  // Dismiss dialog
   static void dismissDialog(BuildContext context) {
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();

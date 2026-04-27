@@ -18,7 +18,6 @@ class FirebaseAuthService {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       if (credential.user != null) {
-        // Update display name
         await credential.user!.updateDisplayName(name);
         await credential.user!.reload();
       }

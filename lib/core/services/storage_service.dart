@@ -4,7 +4,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Upload image
   Future<String> uploadImage({
     required String path,
     required String userId,
@@ -28,7 +27,6 @@ class StorageService {
     }
   }
 
-  // Delete image
   Future<void> deleteImage(String imageUrl) async {
     try {
       final ref = _storage.refFromURL(imageUrl);

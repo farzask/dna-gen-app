@@ -27,27 +27,22 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Load user data
   Future<void> loadUserData() async {
     await _homeProvider.loadUserData();
   }
 
-  // Load recent scans
   Future<void> loadRecentScans({int limit = 10}) async {
     await _homeProvider.loadRecentScans(limit: limit);
   }
 
-  // Refresh data
   Future<void> refreshData() async {
     await _homeProvider.refreshData();
   }
 
-  // Clear error
   void clearError() {
     _homeProvider.clearError();
   }
 
-  // Get greeting based on time
   String getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -59,7 +54,6 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  // Get user display name
   String getUserDisplayName() {
     return currentUser?.name ?? 'User';
   }

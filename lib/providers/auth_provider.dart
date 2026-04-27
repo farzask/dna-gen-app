@@ -19,19 +19,16 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _authService.currentUser != null;
   User? get firebaseUser => _authService.currentUser;
 
-  // Set state
   void _setState(AppState newState) {
     _state = newState;
     notifyListeners();
   }
 
-  // Set error
   void _setError(String error) {
     _errorMessage = error;
     _setState(AppState.error);
   }
 
-  // Clear error
   void clearError() {
     _errorMessage = null;
     _setState(AppState.idle);
@@ -52,7 +49,6 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (user != null) {
-        // Create user profile in Firestore
         try {
           await _firestoreService.createUserProfile(
             uid: user.uid,
@@ -61,11 +57,8 @@ class AuthProvider with ChangeNotifier {
           );
         } catch (firestoreError) {
           debugPrint('Firestore error (non-critical): $firestoreError');
-          // Don't fail signup if Firestore fails
-          // User can still login, profile will be created on next attempt
         }
 
-        // Load user profile
         try {
           await loadUserProfile();
         } catch (e) {
@@ -85,7 +78,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Sign in with email and password
   Future<bool> signIn({required String email, required String password}) async {
     try {
       _setState(AppState.loading);
@@ -96,7 +88,6 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (user != null) {
-        // Load user profile
         await loadUserProfile();
 
         _setState(AppState.success);
@@ -123,7 +114,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Reset password
   Future<bool> resetPassword({required String email}) async {
     try {
       _setState(AppState.loading);
@@ -136,7 +126,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Load user profile
   Future<void> loadUserProfile() async {
     try {
       final uid = _authService.currentUserId;
@@ -149,7 +138,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Update user profile
   Future<bool> updateUserProfile({String? name, String? photoUrl}) async {
     try {
       _setState(AppState.loading);
@@ -167,7 +155,6 @@ class AuthProvider with ChangeNotifier {
 
       await _firestoreService.updateUserProfile(uid: uid, data: updateData);
 
-      // Reload user profile
       await loadUserProfile();
 
       _setState(AppState.success);
@@ -178,7 +165,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Delete account
   Future<bool> deleteAccount() async {
     try {
       _setState(AppState.loading);
@@ -189,10 +175,8 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
 
-      // Delete user data from Firestore
       await _firestoreService.deleteUserData(uid);
 
-      // Delete Firebase Auth account
       await _authService.deleteAccount();
 
       _currentUser = null;
@@ -204,7 +188,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Check authentication state
   Future<void> checkAuthState() async {
     final user = _authService.currentUser;
     if (user != null) {

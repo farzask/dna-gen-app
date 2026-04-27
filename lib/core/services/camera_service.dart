@@ -8,7 +8,6 @@ class CameraService {
   CameraController? get controller => _controller;
   bool get isInitialized => _controller?.value.isInitialized ?? false;
 
-  // Initialize camera
   Future<void> initializeCamera() async {
     try {
       _cameras = await availableCameras();
@@ -53,7 +52,6 @@ class CameraService {
     }
   }
 
-  // Switch camera
   Future<void> switchCamera() async {
     try {
       if (_cameras == null || _cameras!.length < 2) {
@@ -90,7 +88,6 @@ class CameraService {
     }
   }
 
-  // Dispose camera
   Future<void> disposeCamera() async {
     await _controller?.dispose();
     _controller = null;

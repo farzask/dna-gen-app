@@ -1,12 +1,10 @@
 import 'package:intl/intl.dart';
 
 class DateFormatter {
-  // Format date to readable string (e.g., "Jan 28, 2026")
   static String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
   }
 
-  // Format date with time (e.g., "Jan 28, 2026 at 2:30 PM")
   static String formatDateTime(DateTime date) {
     return DateFormat('MMM dd, yyyy \'at\' h:mm a').format(date);
   }
@@ -55,12 +53,10 @@ class DateFormatter {
     }
   }
 
-  // Short date format (e.g., "28 Jan")
   static String formatShortDate(DateTime date) {
     return DateFormat('dd MMM').format(date);
   }
 
-  // Full date format (e.g., "Wednesday, January 28, 2026")
   static String formatFullDate(DateTime date) {
     return DateFormat('EEEE, MMMM dd, yyyy').format(date);
   }

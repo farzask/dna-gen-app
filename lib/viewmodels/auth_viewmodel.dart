@@ -19,7 +19,6 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Sign up
   Future<bool> signUp({
     required String name,
     required String email,
@@ -32,27 +31,22 @@ class AuthViewModel extends ChangeNotifier {
     );
   }
 
-  // Sign in
   Future<bool> signIn({required String email, required String password}) async {
     return await _authProvider.signIn(email: email, password: password);
   }
 
-  // Sign out
   Future<void> signOut() async {
     await _authProvider.signOut();
   }
 
-  // Reset password
   Future<bool> resetPassword({required String email}) async {
     return await _authProvider.resetPassword(email: email);
   }
 
-  // Clear error
   void clearError() {
     _authProvider.clearError();
   }
 
-  // Check authentication state
   Future<void> checkAuthState() async {
     await _authProvider.checkAuthState();
   }

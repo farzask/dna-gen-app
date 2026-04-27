@@ -1,5 +1,4 @@
 class Validators {
-  // Email validation
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your email';
@@ -16,7 +15,6 @@ class Validators {
     return null;
   }
 
-  // Password validation
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your password';
@@ -29,7 +27,6 @@ class Validators {
     return null;
   }
 
-  // Name validation
   static String? validateName(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your name';
@@ -42,7 +39,6 @@ class Validators {
     return null;
   }
 
-  // Confirm password validation
   static String? validateConfirmPassword(String? value, String password) {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
@@ -55,7 +51,6 @@ class Validators {
     return null;
   }
 
-  // Phone number validation (optional)
   static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
       return null; // Optional field
@@ -70,7 +65,6 @@ class Validators {
     return null;
   }
 
-  // Generic required field validation
   static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
       return 'Please enter $fieldName';
@@ -78,7 +72,6 @@ class Validators {
     return null;
   }
 
-  // Minimum length validation
   static String? validateMinLength(
     String? value,
     int minLength,
@@ -95,7 +88,6 @@ class Validators {
     return null;
   }
 
-  // Maximum length validation
   static String? validateMaxLength(
     String? value,
     int maxLength,

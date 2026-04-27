@@ -21,25 +21,21 @@ class HomeProvider with ChangeNotifier {
   List<ScanModel> get recentScans => _recentScans;
   Stream<List<ScanModel>>? get scansStream => _scansStream;
 
-  // Set state
   void _setState(AppState newState) {
     _state = newState;
     notifyListeners();
   }
 
-  // Set error
   void _setError(String error) {
     _errorMessage = error;
     _setState(AppState.error);
   }
 
-  // Clear error
   void clearError() {
     _errorMessage = null;
     _setState(AppState.idle);
   }
 
-  // Load user data
   Future<void> loadUserData() async {
     try {
       _setState(AppState.loading);
@@ -50,13 +46,10 @@ class HomeProvider with ChangeNotifier {
         return;
       }
 
-      // Load user profile
       _currentUser = await _firestoreService.getUserProfile(userId);
 
-      // Load recent scans
       await loadRecentScans();
 
-      // Initialize scans stream
       _scansStream = _firestoreService.watchUserScans(userId, limit: 20);
 
       _setState(AppState.success);
@@ -65,7 +58,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  // Load recent scans
   Future<void> loadRecentScans({int limit = 10}) async {
     try {
       final userId = _authService.currentUserId;
@@ -78,23 +70,18 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  // Refresh data
   Future<void> refreshData() async {
     await loadUserData();
   }
 
-  // Get total scans count
   int get totalScansCount => _recentScans.length;
 
-  // Get authenticated scans count
   int get authenticatedScansCount =>
       _recentScans.where((scan) => scan.isAuthentic).length;
 
-  // Get failed scans count
   int get failedScansCount =>
       _recentScans.where((scan) => !scan.isAuthentic).length;
 
-  // Get success rate
   double get successRate {
     if (_recentScans.isEmpty) return 0.0;
     return (authenticatedScansCount / totalScansCount) * 100;
