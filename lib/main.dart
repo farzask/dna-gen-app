@@ -1,3 +1,7 @@
+import 'package:dnagen/core/services/backend_service.dart';
+import 'package:dnagen/core/services/camera_service.dart';
+import 'package:dnagen/core/services/firestore_service.dart';
+import 'package:dnagen/providers/scan_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +9,6 @@ import 'firebase_options.dart';
 import 'views/splash/splash_view.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/home_viewmodel.dart';
-import 'viewmodels/scan_viewmodel.dart';
 import 'routes/app_router.dart';
 import 'core/constants/app_colors.dart';
 
@@ -26,7 +29,13 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
-        ChangeNotifierProvider(create: (_) => ScanViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => ScanProvider(
+            backendService: BackendService(),
+            firestoreService: FirestoreService(),
+            cameraService: CameraService(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'DNA Gen',

@@ -11,12 +11,12 @@ class AppColors {
 
   // Text Colors
   static const Color textPrimary = Colors.white;
-  static final Color textSecondary = Colors.white.withOpacity(0.6);
-  static final Color textTertiary = Colors.white.withOpacity(0.3);
+  static final Color textSecondary = Colors.white.withValues(alpha: 0.6);
+  static final Color textTertiary = Colors.white.withValues(alpha: 0.3);
 
   // Border Colors
-  static final Color borderLight = Colors.white.withOpacity(0.1);
-  static final Color borderCyan = primaryCyan.withOpacity(0.3);
+  static final Color borderLight = Colors.white.withValues(alpha: 0.1);
+  static final Color borderCyan = primaryCyan.withValues(alpha: 0.3);
 
   // Status Colors
   static const Color error = Color(0xFFFF4444);
@@ -24,6 +24,6 @@ class AppColors {
   static const Color warning = Color(0xFFFFA726);
 
   // Icon Colors
-  static final Color iconPrimary = Colors.white.withOpacity(0.5);
-  static final Color iconSecondary = Colors.white.withOpacity(0.3);
+  static final Color iconPrimary = Colors.white.withValues(alpha: 0.5);
+  static final Color iconSecondary = Colors.white.withValues(alpha: 0.3);
 }

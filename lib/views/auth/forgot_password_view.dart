@@ -78,10 +78,10 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryCyan.withOpacity(0.1),
+                        color: AppColors.primaryCyan.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.primaryCyan.withOpacity(0.3),
+                          color: AppColors.primaryCyan.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),

@@ -21,9 +21,9 @@ class ScanCard extends StatelessWidget {
           color: AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
           border: Border.all(
-            color: scan.isAuthenticated
-                ? AppColors.primaryCyan.withOpacity(0.3)
-                : AppColors.error.withOpacity(0.3),
+            color: scan.isAuthentic
+                ? AppColors.primaryCyan.withValues(alpha: 0.3)
+                : AppColors.error.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -93,7 +93,7 @@ class ScanCard extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: scan.isAuthenticated
+                            color: scan.isAuthentic
                                 ? AppColors.primaryCyan
                                 : AppColors.error,
                             borderRadius: BorderRadius.circular(8),
@@ -102,7 +102,7 @@ class ScanCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                scan.isAuthenticated
+                                scan.isAuthentic
                                     ? Icons.check_circle_outline
                                     : Icons.cancel_outlined,
                                 size: 14,
@@ -110,7 +110,7 @@ class ScanCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                scan.isAuthenticated ? 'Verified' : 'Failed',
+                                scan.isAuthentic ? 'Verified' : 'Failed',
                                 style: AppTextStyles.bodySmall.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,

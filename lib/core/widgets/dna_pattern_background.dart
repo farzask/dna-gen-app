@@ -20,7 +20,7 @@ class DnaPatternBackground extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primaryCyan.withOpacity(0.1),
+                color: AppColors.primaryCyan.withValues(alpha: 0.1),
                 width: 40,
               ),
             ),
@@ -35,7 +35,7 @@ class DnaPatternBackground extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primaryPurple.withOpacity(0.1),
+                color: AppColors.primaryPurple.withValues(alpha: 0.1),
                 width: 50,
               ),
             ),

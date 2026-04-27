@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,7 +27,7 @@ class FirebaseAuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      print('Sign up error: $e');
+      debugPrint('Sign up error: $e');
       throw 'An unexpected error occurred';
     }
   }

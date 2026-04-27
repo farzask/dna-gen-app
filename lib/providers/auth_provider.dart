@@ -60,7 +60,7 @@ class AuthProvider with ChangeNotifier {
             email: email,
           );
         } catch (firestoreError) {
-          print('Firestore error (non-critical): $firestoreError');
+          debugPrint('Firestore error (non-critical): $firestoreError');
           // Don't fail signup if Firestore fails
           // User can still login, profile will be created on next attempt
         }
@@ -69,7 +69,7 @@ class AuthProvider with ChangeNotifier {
         try {
           await loadUserProfile();
         } catch (e) {
-          print('Load profile error (non-critical): $e');
+          debugPrint('Load profile error (non-critical): $e');
         }
 
         _setState(AppState.success);
@@ -79,7 +79,7 @@ class AuthProvider with ChangeNotifier {
       _setError('Failed to create account');
       return false;
     } catch (e) {
-      print('Sign up error: $e');
+      debugPrint('Sign up error: $e');
       _setError(e.toString());
       return false;
     }

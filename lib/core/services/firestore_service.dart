@@ -1,4 +1,166 @@
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import '../../core/models/user_model.dart';
+// import '../../core/models/scan_model.dart';
+
+// class FirestoreService {
+//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+//   CollectionReference get _usersCollection => _firestore.collection('users');
+//   CollectionReference get _scansCollection => _firestore.collection('scans');
+
+//   Future<void> createUserProfile({
+//     required String uid,
+//     required String name,
+//     required String email,
+//   }) async {
+//     try {
+//       final user = UserModel(
+//         uid: uid,
+//         name: name,
+//         email: email,
+//         createdAt: DateTime.now(),
+//       );
+
+//       await _usersCollection.doc(uid).set(user.toJson());
+//       debugPrint('✅ User profile created in Firestore');
+//     } catch (e) {
+//       debugPrint('❌ Failed to create user profile: $e');
+//       throw 'Failed to create user profile: $e';
+//     }
+//   }
+
+//   Future<UserModel?> getUserProfile(String uid) async {
+//     try {
+//       final doc = await _usersCollection.doc(uid).get();
+//       if (doc.exists) {
+//         return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+//       }
+//       return null;
+//     } catch (e) {
+//       debugPrint('Error getting user profile: $e');
+//       throw 'Failed to get user profile';
+//     }
+//   }
+
+//   Future<void> updateUserProfile({
+//     required String uid,
+//     Map<String, dynamic>? data,
+//   }) async {
+//     try {
+//       await _usersCollection.doc(uid).update(data ?? {});
+//     } catch (e) {
+//       throw 'Failed to update user profile';
+//     }
+//   }
+
+//   Future<String> createScanRecord({
+//     required String userId,
+//     required String imageUrl,
+//     required bool isAuthenticated,
+//     required Map<String, dynamic> metadata,
+//   }) async {
+//     try {
+//       debugPrint('💾 Creating scan record...');
+//       debugPrint('   User ID: $userId');
+//       debugPrint('   Image URL: $imageUrl');
+//       debugPrint('   Is Authenticated: $isAuthenticated');
+
+//       // Create scan document
+//       final scanData = {
+//         'userId': userId,
+//         'imageUrl': imageUrl,
+//         'isAuthenticated': isAuthenticated,
+//         'metadata': metadata,
+//         'createdAt': FieldValue.serverTimestamp(),
+//       };
+
+//       final docRef = await _scansCollection.add(scanData);
+//       debugPrint('✅ Scan created with ID: ${docRef.id}');
+
+//       // Update with ID
+//       await docRef.update({'id': docRef.id});
+
+//       return docRef.id;
+//     } catch (e) {
+//       debugPrint('❌ Failed to create scan record: $e');
+//       debugPrint('   Error type: ${e.runtimeType}');
+//       throw 'Failed to create scan record: ${e.toString()}';
+//     }
+//   }
+
+//   Future<List<ScanModel>> getUserScans(String userId, {int limit = 20}) async {
+//     try {
+//       final querySnapshot = await _scansCollection
+//           .where('userId', isEqualTo: userId)
+//           .orderBy('createdAt', descending: true)
+//           .limit(limit)
+//           .get();
+
+//       return querySnapshot.docs
+//           .map((doc) => ScanModel.fromJson(doc.data() as Map<String, dynamic>))
+//           .toList();
+//     } catch (e) {
+//       debugPrint('Error getting scans: $e');
+//       throw 'Failed to get scans';
+//     }
+//   }
+
+//   Stream<List<ScanModel>> getUserScansStream(String userId, {int limit = 20}) {
+//     return _scansCollection
+//         .where('userId', isEqualTo: userId)
+//         .orderBy('createdAt', descending: true)
+//         .limit(limit)
+//         .snapshots()
+//         .map(
+//           (snapshot) => snapshot.docs
+//               .map(
+//                 (doc) => ScanModel.fromJson(doc.data() as Map<String, dynamic>),
+//               )
+//               .toList(),
+//         );
+//   }
+
+//   Future<ScanModel?> getScanById(String scanId) async {
+//     try {
+//       final doc = await _scansCollection.doc(scanId).get();
+//       if (doc.exists) {
+//         return ScanModel.fromJson(doc.data() as Map<String, dynamic>);
+//       }
+//       return null;
+//     } catch (e) {
+//       throw 'Failed to get scan';
+//     }
+//   }
+
+//   Future<void> deleteScan(String scanId) async {
+//     try {
+//       await _scansCollection.doc(scanId).delete();
+//     } catch (e) {
+//       throw 'Failed to delete scan';
+//     }
+//   }
+
+//   Future<void> deleteUserData(String userId) async {
+//     try {
+//       await _usersCollection.doc(userId).delete();
+
+//       final scans = await _scansCollection
+//           .where('userId', isEqualTo: userId)
+//           .get();
+
+//       final batch = _firestore.batch();
+//       for (var doc in scans.docs) {
+//         batch.delete(doc.reference);
+//       }
+//       await batch.commit();
+//     } catch (e) {
+//       throw 'Failed to delete user data';
+//     }
+//   }
+// }
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/models/user_model.dart';
 import '../../core/models/scan_model.dart';
 
@@ -7,6 +169,8 @@ class FirestoreService {
 
   CollectionReference get _usersCollection => _firestore.collection('users');
   CollectionReference get _scansCollection => _firestore.collection('scans');
+
+  // ─── User Profile ───────────────────────────────────────────────────────────
 
   Future<void> createUserProfile({
     required String uid,
@@ -20,11 +184,8 @@ class FirestoreService {
         email: email,
         createdAt: DateTime.now(),
       );
-
       await _usersCollection.doc(uid).set(user.toJson());
-      print('✅ User profile created in Firestore');
     } catch (e) {
-      print('❌ Failed to create user profile: $e');
       throw 'Failed to create user profile: $e';
     }
   }
@@ -37,94 +198,84 @@ class FirestoreService {
       }
       return null;
     } catch (e) {
-      print('Error getting user profile: $e');
       throw 'Failed to get user profile';
     }
   }
 
   Future<void> updateUserProfile({
     required String uid,
-    Map<String, dynamic>? data,
+    required Map<String, dynamic> data,
   }) async {
     try {
-      await _usersCollection.doc(uid).update(data ?? {});
+      await _usersCollection.doc(uid).update(data);
     } catch (e) {
       throw 'Failed to update user profile';
     }
   }
 
-  Future<String> createScanRecord({
-    required String userId,
-    required String imageUrl,
-    required bool isAuthenticated,
-    required Map<String, dynamic> metadata,
-  }) async {
+  // ─── Scan Records ────────────────────────────────────────────────────────────
+
+  /// Saves a verified scan result from the DNA Gen API response.
+  /// Returns the Firestore document ID.
+  Future<String> saveScanResult(ScanModel scan) async {
     try {
-      print('💾 Creating scan record...');
-      print('   User ID: $userId');
-      print('   Image URL: $imageUrl');
-      print('   Is Authenticated: $isAuthenticated');
-
-      // Create scan document
-      final scanData = {
-        'userId': userId,
-        'imageUrl': imageUrl,
-        'isAuthenticated': isAuthenticated,
-        'metadata': metadata,
+      final docRef = await _scansCollection.add({
+        ...scan.toFirestore(),
         'createdAt': FieldValue.serverTimestamp(),
-      };
+      });
 
-      final docRef = await _scansCollection.add(scanData);
-      print('✅ Scan created with ID: ${docRef.id}');
-
-      // Update with ID
       await docRef.update({'id': docRef.id});
+
+      debugPrint('Scan saved: ${docRef.id} | authentic: ${scan.isAuthentic} | accuracy: ${scan.accuracy}');
 
       return docRef.id;
     } catch (e) {
-      print('❌ Failed to create scan record: $e');
-      print('   Error type: ${e.runtimeType}');
-      throw 'Failed to create scan record: ${e.toString()}';
+      debugPrint('Failed to save scan: $e');
+      throw 'Failed to save scan result: $e';
     }
   }
 
   Future<List<ScanModel>> getUserScans(String userId, {int limit = 20}) async {
     try {
-      final querySnapshot = await _scansCollection
+      final snapshot = await _scansCollection
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
           .limit(limit)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => ScanModel.fromJson(doc.data() as Map<String, dynamic>))
+      return snapshot.docs
+          .map((doc) => ScanModel.fromFirestore(
+                doc.data() as Map<String, dynamic>,
+                doc.id,
+              ))
           .toList();
     } catch (e) {
-      print('Error getting scans: $e');
       throw 'Failed to get scans';
     }
   }
 
-  Stream<List<ScanModel>> getUserScansStream(String userId, {int limit = 20}) {
+  Stream<List<ScanModel>> watchUserScans(String userId, {int limit = 20}) {
     return _scansCollection
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) => ScanModel.fromJson(doc.data() as Map<String, dynamic>),
-              )
-              .toList(),
-        );
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ScanModel.fromFirestore(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                ))
+            .toList());
   }
 
   Future<ScanModel?> getScanById(String scanId) async {
     try {
       final doc = await _scansCollection.doc(scanId).get();
       if (doc.exists) {
-        return ScanModel.fromJson(doc.data() as Map<String, dynamic>);
+        return ScanModel.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
       }
       return null;
     } catch (e) {
@@ -140,18 +291,22 @@ class FirestoreService {
     }
   }
 
+  // ─── User Data Cleanup ───────────────────────────────────────────────────────
+
   Future<void> deleteUserData(String userId) async {
     try {
-      await _usersCollection.doc(userId).delete();
-
       final scans = await _scansCollection
           .where('userId', isEqualTo: userId)
           .get();
 
       final batch = _firestore.batch();
-      for (var doc in scans.docs) {
+
+      for (final doc in scans.docs) {
         batch.delete(doc.reference);
       }
+
+      batch.delete(_usersCollection.doc(userId));
+
       await batch.commit();
     } catch (e) {
       throw 'Failed to delete user data';

@@ -57,7 +57,7 @@ class HomeProvider with ChangeNotifier {
       await loadRecentScans();
 
       // Initialize scans stream
-      _scansStream = _firestoreService.getUserScansStream(userId, limit: 20);
+      _scansStream = _firestoreService.watchUserScans(userId, limit: 20);
 
       _setState(AppState.success);
     } catch (e) {
@@ -88,11 +88,11 @@ class HomeProvider with ChangeNotifier {
 
   // Get authenticated scans count
   int get authenticatedScansCount =>
-      _recentScans.where((scan) => scan.isAuthenticated).length;
+      _recentScans.where((scan) => scan.isAuthentic).length;
 
   // Get failed scans count
   int get failedScansCount =>
-      _recentScans.where((scan) => !scan.isAuthenticated).length;
+      _recentScans.where((scan) => !scan.isAuthentic).length;
 
   // Get success rate
   double get successRate {

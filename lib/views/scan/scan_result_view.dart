@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../viewmodels/scan_viewmodel.dart';
+import '../../providers/scan_provider.dart';
 import '../../core/widgets/custom_appbar.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../core/widgets/custom_button.dart';
@@ -23,16 +22,12 @@ class ScanResultView extends StatefulWidget {
 }
 
 class _ScanResultViewState extends State<ScanResultView> {
-  late ScanViewModel _viewModel;
-  ScanModel? _scan;
+  ScanModel? _historicalScan;
   bool _isLoading = false;
-  Map<String, dynamic>? _firebaseData;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = context.read<ScanViewModel>();
-
     if (widget.scanId != null) {
       _loadScan();
     }
@@ -41,36 +36,12 @@ class _ScanResultViewState extends State<ScanResultView> {
   Future<void> _loadScan() async {
     setState(() => _isLoading = true);
     try {
-      _scan = await _viewModel.getScanById(widget.scanId!);
-
-      // Fetch Firebase data
-      if (_scan != null) {
-        await _fetchFirebaseData(_scan!.id);
-      }
+      _historicalScan =
+          await context.read<ScanProvider>().getScanById(widget.scanId!);
     } catch (e) {
-      print('Error loading scan: $e');
+      debugPrint('Error loading scan: $e');
     }
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _fetchFirebaseData(String scanId) async {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('scans')
-          .doc(scanId)
-          .get();
-
-      if (doc.exists) {
-        print('Firebase data: ${doc.data()}');
-        setState(() {
-          _firebaseData = doc.data();
-        });
-      } else {
-        print('Document does not exist for scanId: $scanId');
-      }
-    } catch (e) {
-      print('Error fetching Firebase data: $e');
-    }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -78,39 +49,24 @@ class _ScanResultViewState extends State<ScanResultView> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: const CustomAppBar(title: AppStrings.scanResult),
-      body: Consumer<ScanViewModel>(
-        builder: (context, viewModel, child) {
+      body: Consumer<ScanProvider>(
+        builder: (context, scanProvider, child) {
           if (_isLoading) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primaryCyan),
             );
           }
 
-          // Show from scan history (when scanId is provided)
-          if (_scan != null && _firebaseData != null) {
-            return _buildResultFromScan(_scan!);
+          // Show historical scan loaded by scanId
+          if (_historicalScan != null) {
+            return _buildResult(_historicalScan!, useLocalFile: false);
           }
 
-          // Show from current authentication result - check all conditions
-          final hasImage = viewModel.capturedImage != null;
-          final hasAuthResult = viewModel.authenticationResult != null;
-          final hasResult = viewModel.hasResult;
-
-          print('=== Current Result Check ===');
-          print('hasImage: $hasImage');
-          print('hasAuthResult: $hasAuthResult');
-          print('hasResult: $hasResult');
-          print('capturedImage path: ${viewModel.capturedImage?.path}');
-          print('authenticationResult: ${viewModel.authenticationResult}');
-
-          // Show result if we have image and auth result (even if hasResult is false)
-          if (hasImage && hasAuthResult) {
-            print('Building current result from image + auth result');
-            return _buildResultFromCurrent(viewModel);
+          // Show result from the most recently completed scan
+          final currentScan = scanProvider.lastScan;
+          if (currentScan != null) {
+            return _buildResult(currentScan, useLocalFile: true);
           }
-
-          // No result available
-          print('No result available - returning empty state');
 
           return Center(
             child: Column(
@@ -137,52 +93,26 @@ class _ScanResultViewState extends State<ScanResultView> {
     );
   }
 
-  Widget _buildResultFromScan(ScanModel scan) {
-    final isAuthenticated = _firebaseData?['isAuthenticated'] ?? false;
-    final metadata = _firebaseData?['metadata'] as Map<String, dynamic>?;
-    final confidenceScore = metadata?['confidenceScore'];
-    final message = metadata?['message'];
-
-    print('isAuthenticated: $isAuthenticated');
-    print('confidenceScore: $confidenceScore');
-    print('message: $message');
-
+  Widget _buildResult(ScanModel scan, {required bool useLocalFile}) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Image from URL
+          // Image preview
           Container(
             width: double.infinity,
             height: 300,
             color: Colors.black,
-            child: Image.network(
-              scan.imageUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Center(
-                  child: Icon(
-                    Icons.broken_image,
-                    size: 64,
-                    color: AppColors.iconPrimary,
-                  ),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryCyan,
-                  ),
-                );
-              },
-            ),
+            child: _buildImage(scan.imageUrl, useLocalFile: useLocalFile),
           ),
+
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingL),
             child: Column(
               children: [
-                StatusBadge(isAuthenticated: isAuthenticated),
+                StatusBadge(isAuthenticated: scan.isAuthentic),
                 const SizedBox(height: AppDimensions.spaceXL),
+
+                // Details card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -196,28 +126,32 @@ class _ScanResultViewState extends State<ScanResultView> {
                       _DetailRow(
                         icon: Icons.info_outline,
                         label: 'Status',
-                        value: isAuthenticated ? 'Authenticated' : 'Failed',
+                        value: scan.isAuthentic
+                            ? 'Authenticated'
+                            : 'Not Authenticated',
                       ),
-                      if (confidenceScore != null) ...[
-                        const SizedBox(height: AppDimensions.spaceM),
-                        _DetailRow(
-                          icon: Icons.percent,
-                          label: 'Confidence',
-                          value:
-                              '${(confidenceScore * 100).toStringAsFixed(1)}%',
-                        ),
-                      ],
-                      if (message != null) ...[
-                        const SizedBox(height: AppDimensions.spaceM),
-                        _DetailRow(
-                          icon: Icons.message_outlined,
-                          label: 'Message',
-                          value: message.toString(),
-                        ),
-                      ],
+                      const SizedBox(height: AppDimensions.spaceM),
+                      _DetailRow(
+                        icon: Icons.percent,
+                        label: 'Accuracy',
+                        value: '${scan.accuracy.toStringAsFixed(1)}%',
+                      ),
+                      const SizedBox(height: AppDimensions.spaceM),
+                      _DetailRow(
+                        icon: Icons.bar_chart,
+                        label: 'Correlation Strength',
+                        value: scan.correlationStrength.toStringAsFixed(4),
+                      ),
+                      const SizedBox(height: AppDimensions.spaceM),
+                      _DetailRow(
+                        icon: Icons.compare_arrows,
+                        label: 'Matches',
+                        value: '${scan.matches} / ${scan.totalBits}',
+                      ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: AppDimensions.spaceXL),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 30.0),
@@ -234,82 +168,39 @@ class _ScanResultViewState extends State<ScanResultView> {
     );
   }
 
-  Widget _buildResultFromCurrent(ScanViewModel viewModel) {
-    final confidenceScore = viewModel.authenticationResult?.confidenceScore;
-    final isAuthenticated =
-        viewModel.authenticationResult?.isAuthenticated ?? false;
+  Widget _buildImage(String imageUrl, {required bool useLocalFile}) {
+    final isLocalPath = !imageUrl.startsWith('http');
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Image from local file
-          Container(
-            width: double.infinity,
-            height: 300,
-            color: Colors.black,
-            child: Image.file(
-              File(viewModel.capturedImage!.path),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Center(
-                  child: Icon(
-                    Icons.broken_image,
-                    size: 64,
-                    color: AppColors.iconPrimary,
-                  ),
-                );
-              },
-            ),
+    if (useLocalFile || isLocalPath) {
+      return Image.file(
+        File(imageUrl),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => Center(
+          child: Icon(
+            Icons.broken_image,
+            size: 64,
+            color: AppColors.iconPrimary,
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingL),
-            child: Column(
-              children: [
-                StatusBadge(isAuthenticated: isAuthenticated),
-                const SizedBox(height: AppDimensions.spaceXL),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundLight,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                    border: Border.all(color: AppColors.borderLight, width: 1),
-                  ),
-                  child: Column(
-                    children: [
-                      _DetailRow(
-                        icon: Icons.info_outline,
-                        label: 'Status',
-                        value: isAuthenticated ? 'Authenticated' : 'Failed',
-                      ),
-                      if (confidenceScore != null) ...[
-                        const SizedBox(height: AppDimensions.spaceM),
-                        _DetailRow(
-                          icon: Icons.percent,
-                          label: 'Confidence',
-                          value:
-                              '${(confidenceScore * 100).toStringAsFixed(1)}%',
-                        ),
-                      ],
-                      const SizedBox(height: AppDimensions.spaceM),
-                      _DetailRow(
-                        icon: Icons.message_outlined,
-                        label: 'Message',
-                        value: viewModel.getResultMessage(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.spaceXL),
-                CustomButton(
-                  text: 'Back to Home',
-                  onPressed: () => AppRouter.navigateToHome(context),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
+      );
+    }
+
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Center(
+        child: Icon(
+          Icons.broken_image,
+          size: 64,
+          color: AppColors.iconPrimary,
+        ),
       ),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryCyan),
+        );
+      },
     );
   }
 }

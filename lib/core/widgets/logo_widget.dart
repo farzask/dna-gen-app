@@ -19,7 +19,7 @@ class LogoWidget extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: const Color(0xFF00B4D8).withOpacity(0.1),
+            color: const Color(0xFF00B4D8).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(size * 0.25),
             border: Border.all(color: const Color(0xFF00B4D8), width: 2),
           ),

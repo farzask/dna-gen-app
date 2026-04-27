@@ -55,7 +55,7 @@ class AppTextStyles {
   static TextStyle label = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    color: AppColors.textPrimary.withOpacity(0.9),
+    color: AppColors.textPrimary.withValues(alpha: 0.9),
   );
 
   // Button

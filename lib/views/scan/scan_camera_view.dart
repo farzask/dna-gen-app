@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:camera/camera.dart';
 import 'dart:io';
-import '../../viewmodels/scan_viewmodel.dart';
+import '../../providers/scan_provider.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_appbar.dart';
 import '../../core/constants/app_colors.dart';
@@ -20,13 +21,14 @@ class ScanCameraView extends StatefulWidget {
 }
 
 class _ScanCameraViewState extends State<ScanCameraView> {
-  late ScanViewModel _viewModel;
+  late final ScanProvider _scanProvider;
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ScanViewModel();
+    _scanProvider = context.read<ScanProvider>();
+    _scanProvider.retakeImage(); // clear any previous capture before opening camera
     _initializeCamera();
   }
 
@@ -43,108 +45,94 @@ class _ScanCameraViewState extends State<ScanCameraView> {
       return;
     }
 
-    final success = await _viewModel.initializeCamera();
+    final success = await _scanProvider.initializeCamera();
 
     if (success && mounted) {
       setState(() => _isInitialized = true);
     } else if (mounted) {
       DialogHelper.showErrorDialog(
         context,
-        message: _viewModel.errorMessage ?? 'Failed to initialize camera',
+        message: _scanProvider.errorMessage ?? 'Failed to initialize camera',
       );
     }
   }
 
   Future<void> _handleCapture() async {
-    final success = await _viewModel.captureImage();
+    final success = await _scanProvider.captureImage();
 
     if (!success && mounted) {
       DialogHelper.showErrorDialog(
         context,
-        message: _viewModel.errorMessage ?? 'Failed to capture image',
+        message: _scanProvider.errorMessage ?? 'Failed to capture image',
       );
     }
   }
 
   void _handleRetake() {
-    _viewModel.retakeImage();
+    _scanProvider.retakeImage();
   }
 
   Future<void> _handleAnalyze() async {
+    if (!mounted) return;
     DialogHelper.showLoadingDialog(context, message: AppStrings.analyzing);
 
-    final success = await _viewModel.authenticateImage();
+    final userId =
+        context.read<AuthViewModel>().authProvider.firebaseUser?.uid ?? '';
+
+    final success = await _scanProvider.authenticateImage(userId);
 
     if (!mounted) return;
-
     DialogHelper.dismissDialog(context);
 
     if (success) {
-      // Get the scanId from the ViewModel after successful analysis
-      final scanId = _viewModel.lastScanId;
-
-      debugPrint('🔍 lastScanId: $scanId');
-      debugPrint('🔍 authResult: ${_viewModel.authenticationResult}');
-      debugPrint(
-        '🔍 authResult.scanId: ${_viewModel.authenticationResult?.scanId}',
-      );
-
-      if (scanId != null) {
-        // Navigate with scanId so the result page can fetch from Firebase
-        AppRouter.navigateToScanResult(context, scanId: scanId);
-      } else {
-        DialogHelper.showErrorDialog(context, message: 'Failed to get scan ID');
-      }
+      AppRouter.navigateToScanResult(context, scanId: null);
     } else {
       DialogHelper.showErrorDialog(
         context,
-        message: _viewModel.errorMessage ?? 'Failed to analyze image',
+        message: _scanProvider.errorMessage ?? 'Failed to analyze image',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _viewModel,
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        appBar: const CustomAppBar(title: AppStrings.scanImage),
-        body: Consumer<ScanViewModel>(
-          builder: (context, viewModel, child) {
-            if (!_isInitialized) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryCyan),
-              );
-            }
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      appBar: const CustomAppBar(title: AppStrings.scanImage),
+      body: Consumer<ScanProvider>(
+        builder: (context, scanProvider, child) {
+          if (!_isInitialized) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryCyan),
+            );
+          }
 
-            if (viewModel.hasImage) {
-              return _buildImagePreview(viewModel);
-            }
+          if (scanProvider.hasImage) {
+            return _buildImagePreview(scanProvider);
+          }
 
-            return _buildCameraPreview(viewModel);
-          },
-        ),
+          return _buildCameraPreview(scanProvider);
+        },
       ),
     );
   }
 
-  Widget _buildCameraPreview(ScanViewModel viewModel) {
-    if (viewModel.cameraController == null) {
+  Widget _buildCameraPreview(ScanProvider scanProvider) {
+    if (scanProvider.cameraController == null) {
       return const Center(child: Text('Camera not available'));
     }
 
     return Stack(
       children: [
         // Camera Preview
-        Positioned.fill(child: CameraPreview(viewModel.cameraController!)),
+        Positioned.fill(child: CameraPreview(scanProvider.cameraController!)),
 
-        // Overlay
+        // Overlay border
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: AppColors.primaryCyan.withOpacity(0.5),
+                color: AppColors.primaryCyan.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
@@ -181,7 +169,7 @@ class _ScanCameraViewState extends State<ScanCameraView> {
     );
   }
 
-  Widget _buildImagePreview(ScanViewModel viewModel) {
+  Widget _buildImagePreview(ScanProvider scanProvider) {
     return Column(
       children: [
         Expanded(
@@ -189,7 +177,7 @@ class _ScanCameraViewState extends State<ScanCameraView> {
             color: Colors.black,
             child: Center(
               child: Image.file(
-                File(viewModel.capturedImage!.path),
+                File(scanProvider.capturedImage!.path),
                 fit: BoxFit.contain,
               ),
             ),
@@ -198,31 +186,27 @@ class _ScanCameraViewState extends State<ScanCameraView> {
         Container(
           padding: const EdgeInsets.all(AppDimensions.paddingL),
           color: AppColors.backgroundLight,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 35.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: CustomButton(
-                        text: AppStrings.retake,
-                        onPressed: _handleRetake,
-                        outlined: true,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.spaceM),
-                    Expanded(
-                      child: CustomButton(
-                        text: AppStrings.analyze,
-                        onPressed: _handleAnalyze,
-                        isLoading: viewModel.isLoading,
-                      ),
-                    ),
-                  ],
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 35.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: AppStrings.retake,
+                    onPressed: _handleRetake,
+                    outlined: true,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: AppDimensions.spaceM),
+                Expanded(
+                  child: CustomButton(
+                    text: AppStrings.analyze,
+                    onPressed: _handleAnalyze,
+                    isLoading: scanProvider.isLoading,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -231,8 +215,7 @@ class _ScanCameraViewState extends State<ScanCameraView> {
 
   @override
   void dispose() {
-    _viewModel.disposeCamera();
-    _viewModel.dispose();
+    _scanProvider.disposeCamera();
     super.dispose();
   }
 }
