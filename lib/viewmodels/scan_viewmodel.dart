@@ -68,6 +68,13 @@ class ScanViewModel extends ChangeNotifier {
     _setState(ScanState.idle);
   }
 
+  void setPickedImage(XFile image) {
+    _capturedImage = image;
+    _lastScan = null;
+    _errorMessage = null;
+    _setState(ScanState.idle);
+  }
+
   Future<bool> authenticateImage(String userId) async {
     if (_capturedImage == null) {
       _errorMessage = 'No image captured';

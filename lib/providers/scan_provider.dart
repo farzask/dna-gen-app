@@ -39,6 +39,7 @@ class ScanProvider extends ChangeNotifier {
   Future<bool> initializeCamera() => _viewModel.initializeCamera();
   Future<bool> captureImage() => _viewModel.captureImage();
   void retakeImage() => _viewModel.retakeImage();
+  void setPickedImage(XFile image) => _viewModel.setPickedImage(image);
   Future<bool> authenticateImage(String userId) => _viewModel.authenticateImage(userId);
   Future<void> disposeCamera() => _viewModel.disposeCamera();
 

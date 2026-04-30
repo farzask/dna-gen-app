@@ -10,6 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/dialog_helper.dart';
+import '../../core/utils/image_helper.dart';
 import '../../core/utils/permission_handler.dart';
 import '../../routes/app_router.dart';
 
@@ -70,6 +71,12 @@ class _ScanCameraViewState extends State<ScanCameraView> {
 
   void _handleRetake() {
     _scanProvider.retakeImage();
+  }
+
+  Future<void> _handlePickFromGallery() async {
+    final file = await ImageHelper.pickFromGallery();
+    if (file == null) return;
+    _scanProvider.setPickedImage(XFile(file.path));
   }
 
   Future<void> _handleAnalyze() async {
@@ -144,25 +151,50 @@ class _ScanCameraViewState extends State<ScanCameraView> {
           bottom: 100,
           left: 0,
           right: 0,
-          child: Center(
-            child: GestureDetector(
-              onTap: _handleCapture,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Gallery button
+              GestureDetector(
+                onTap: _handlePickFromGallery,
                 child: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryCyan,
+                    color: Colors.black.withValues(alpha: 0.5),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library_outlined,
+                    color: Colors.white,
+                    size: 26,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 40),
+              // Shutter button
+              GestureDetector(
+                onTap: _handleCapture,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primaryCyan,
+                    ),
+                  ),
+                ),
+              ),
+              // Spacer to balance the row
+              const SizedBox(width: 92),
+            ],
           ),
         ),
       ],
